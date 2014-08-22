@@ -98,7 +98,6 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
           flow.getFlowId(), flow.getVersion(), Status.PREPARING.getNumVal(),
           submitTime, flow.getSubmitUser(), submitTime);
       connection.commit();
-//TODO
       if (this.getDBType().equals("mysql")) {
         id = runner.query(connection, LastInsertID.LAST_INSERT_ID, new LastInsertID());
       } else if (this.getDBType().equals("postgresql")) {

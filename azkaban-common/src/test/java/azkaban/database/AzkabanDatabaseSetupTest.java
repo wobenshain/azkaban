@@ -153,7 +153,7 @@ public class AzkabanDatabaseSetupTest {
     props.put("postgresql.database", "azkabanunittest");
     props.put("postgresql.user", "azkaban");
     props.put("database.sql.scripts.dir", "unit/sql");
-    props.put("postgresql.password", "azpass");
+    props.put("postgresql.password", "azkaban");
     props.put("postgresql.numconnections", 10);
 
     return props;

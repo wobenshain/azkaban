@@ -50,12 +50,12 @@ public class JdbcTriggerLoaderTest {
 
   private static boolean testDBExists = false;
   // @TODO remove this and turn into local host.
-  private static final String databasetype = "mysql";
+  private static final String databasetype = "postgresql";
   private static final String host = "localhost";
-  private static final int port = 3306;
+  private static final int port = 5432;
   private static final String database = "azkaban2";
-  private static final String user = "root";
-  private static final String password = "";
+  private static final String user = "azkaban";
+  private static final String password = "azkaban";
   private static final int numConnections = 10;
 
   private TriggerLoader loader;
@@ -67,12 +67,23 @@ public class JdbcTriggerLoaderTest {
     Props props = new Props();
     props.put("database.type", databasetype);
 
-    props.put("mysql.host", host);
-    props.put("mysql.port", port);
-    props.put("mysql.user", user);
-    props.put("mysql.database", database);
-    props.put("mysql.password", password);
-    props.put("mysql.numconnections", numConnections);
+    if (databasetype.equals("mysql")) {
+      props.put("mysql.host", host);
+      props.put("mysql.port", port);
+      props.put("mysql.user", user);
+      props.put("mysql.database", database);
+      props.put("mysql.password", password);
+      props.put("mysql.numconnections", numConnections);
+    } else if (databasetype.equals("postgresql")) {
+      props.put("postgresql.host", host);
+      props.put("postgresql.port", port);
+      props.put("postgresql.user", user);
+      props.put("postgresql.database", database);
+      props.put("postgresql.password", password);
+      props.put("postgresql.numconnections", numConnections);
+    } else {
+      throw new RuntimeException(databasetype + "is an invalid database type. Please use mysql or postgresql.");
+    }
 
     loader = new JdbcTriggerLoader(props);
     checkerLoader = new CheckerTypeLoader();
@@ -88,8 +99,10 @@ public class JdbcTriggerLoaderTest {
     DataSource dataSource;
     if (databasetype.equals("mysql")) {
         dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
-    } else {
+    } else if (databasetype.equals("postgresql")) {
         dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        throw new RuntimeException(databasetype + " is an invalid database type. Please use mysql or postgresql.");
     }
     testDBExists = true;
 
@@ -128,9 +141,11 @@ public class JdbcTriggerLoaderTest {
     DataSource dataSource;
     if (databasetype.equals("mysql")) {
         dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
-    } else {
+    } else if (databasetype.equals("postgresql")) {
         dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
-    }
+    } else {
+        throw new RuntimeException(databastype + " is an invalid database type. Please use mysql or postgresql.");
+    } 
     Connection connection = null;
     try {
       connection = dataSource.getConnection();

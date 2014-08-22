@@ -60,8 +60,10 @@ public class JdbcProjectLoaderTest {
     DataSource dataSource;
     if (databasetype.equals("mysql")) {
         dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
-    } else {
+    } else if (databasetype.equals("postgresql")) {
         dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        throw new RuntimeException(databasetype + " is an invalid database type. Please use mysql or postgresql.");
     }
     testDBExists = true;
 
@@ -149,8 +151,10 @@ public class JdbcProjectLoaderTest {
     DataSource dataSource;
     if (databasetype.equals("mysql")) {
         dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
-    } else {
+    } else if (databasetype.equals("postgresql")) {
         dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        throw new RuntimeException(databasetype + " is an invalid database type. Please use mysql or postgresql.");
     }
     Connection connection = null;
     try {
@@ -556,7 +560,7 @@ public class JdbcProjectLoaderTest {
     Props props = new Props();
     props.put("database.type", databasetype);
 
-    if (databasetype.equals("msyql")) {
+    if (databasetype.equals("mysql")) {
       props.put("mysql.host", host);
       props.put("mysql.port", port);
       props.put("mysql.user", user);
