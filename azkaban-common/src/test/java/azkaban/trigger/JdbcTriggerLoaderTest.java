@@ -50,11 +50,12 @@ public class JdbcTriggerLoaderTest {
 
   private static boolean testDBExists = false;
   // @TODO remove this and turn into local host.
+  private static final String databasetype = "mysql";
   private static final String host = "localhost";
   private static final int port = 3306;
   private static final String database = "azkaban2";
-  private static final String user = "azkaban";
-  private static final String password = "azkaban";
+  private static final String user = "root";
+  private static final String password = "";
   private static final int numConnections = 10;
 
   private TriggerLoader loader;
@@ -64,7 +65,7 @@ public class JdbcTriggerLoaderTest {
   @Before
   public void setup() throws TriggerException {
     Props props = new Props();
-    props.put("database.type", "mysql");
+    props.put("database.type", databasetype);
 
     props.put("mysql.host", host);
     props.put("mysql.port", port);
@@ -84,9 +85,12 @@ public class JdbcTriggerLoaderTest {
   }
 
   public void setupDB() {
-    DataSource dataSource =
-        DataSourceUtils.getMySQLDataSource(host, port, database, user,
-            password, numConnections);
+    DataSource dataSource;
+    if (databasetype.equals("mysql")) {
+        dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    }
     testDBExists = true;
 
     Connection connection = null;
@@ -121,9 +125,12 @@ public class JdbcTriggerLoaderTest {
       return;
     }
 
-    DataSource dataSource =
-        DataSourceUtils.getMySQLDataSource(host, port, database, user,
-            password, numConnections);
+    DataSource dataSource;
+    if (databasetype.equals("mysql")) {
+        dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    }
     Connection connection = null;
     try {
       connection = dataSource.getConnection();
