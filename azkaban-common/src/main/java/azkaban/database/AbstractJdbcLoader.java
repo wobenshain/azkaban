@@ -63,6 +63,10 @@ public abstract class AbstractJdbcLoader {
     dataSource = DataSourceUtils.getDataSource(props);
   }
 
+  protected String getDBType() {
+    return dataSource.getDBType();
+  }
+
   protected Connection getDBConnection(boolean autoCommit) throws IOException {
     Connection connection = null;
     try {

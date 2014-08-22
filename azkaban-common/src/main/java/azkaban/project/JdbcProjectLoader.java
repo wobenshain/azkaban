@@ -180,7 +180,7 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
       permissions =
           runner.query(connection,
               ProjectPermissionsResultHandler.SELECT_PROJECT_PERMISSION,
-              permHander, project.getId());
+              permHander, Integer.toString(project.getId()));
     } catch (SQLException e) {
       throw new ProjectManagerException("Query for permissions for "
           + project.getName() + " failed.", e);
@@ -511,16 +511,28 @@ public class JdbcProjectLoader extends AbstractJdbcLoader implements
   public void updatePermission(Project project, String name, Permission perm,
       boolean isGroup) throws ProjectManagerException {
     QueryRunner runner = createQueryRunner();
-
     if (this.allowsOnDuplicateKey()) {
-      long updateTime = System.currentTimeMillis();
-      final String INSERT_PROJECT_PERMISSION =
-          "INSERT INTO project_permissions (project_id, modified_time, name, permissions, isGroup) values (?,?,?,?,?)"
-              + "ON DUPLICATE KEY UPDATE modified_time = VALUES(modified_time), permissions = VALUES(permissions)";
-
       try {
-        runner.update(INSERT_PROJECT_PERMISSION, project.getId(), updateTime,
-            name, perm.toFlags(), isGroup);
+        long updateTime = System.currentTimeMillis();
+        if (this.getDBType().equals("msyql")) {
+          runner.update("INSERT INTO project_permissions (project_id, modified_time, name, permissions, isGroup) values (?,?,?,?,?)"
+            + "ON DUPLICATE KEY UPDATE modified_time = VALUES(modified_time), permissions = VALUES(permissions)",
+            project.getId(), updateTime, name, perm.toFlags(), isGroup);
+        } else if (this.getDBType().equals("postgresql")) {
+          runner.update("UPDATE project_permissions SET modified_time=?, permissions=?, isGroup=? WHERE project_id=? AND name=?",
+            updateTime, perm.toFlags(), isGroup, Integer.toString(project.getId()), name);
+          try {
+            runner.update("INSERT INTO project_permissions (project_id, modified_time, name, permissions, isGroup) values (?,?,?,?,?)",
+              Integer.toString(project.getId()), updateTime, name, perm.toFlags(), isGroup);
+          } catch (SQLException e) {
+            if (!e.getMessage().startsWith("ERROR: duplicate key value violates unique constraint")) {
+              System.out.println(e.getMessage());
+              throw e;
+            }
+          }
+        } else {
+          throw new RuntimeException("Should be functionally unreachable.");
+        }
       } catch (SQLException e) {
         logger.error(e);
         throw new ProjectManagerException("Error updating project "

@@ -98,9 +98,14 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
           flow.getFlowId(), flow.getVersion(), Status.PREPARING.getNumVal(),
           submitTime, flow.getSubmitUser(), submitTime);
       connection.commit();
-      id =
-          runner.query(connection, LastInsertID.LAST_INSERT_ID,
-              new LastInsertID());
+//TODO
+      if (this.getDBType().equals("mysql")) {
+        id = runner.query(connection, LastInsertID.LAST_INSERT_ID, new LastInsertID());
+      } else if (this.getDBType().equals("postgresql")) {
+        id = runner.query(connection, LastInsertID.LASTVAL, new LastInsertID());
+      } else {
+        throw new RuntimeException("should be functionally impossible");
+      }
 
       if (id == -1l) {
         throw new ExecutorManagerException(
@@ -429,7 +434,6 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         "INSERT INTO execution_jobs "
             + "(exec_id, project_id, version, flow_id, job_id, start_time, "
             + "end_time, status, input_params, attempt) VALUES (?,?,?,?,?,?,?,?,?,?)";
-
     byte[] inputParam = null;
     if (inputProps != null) {
       try {
@@ -440,7 +444,6 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         throw new ExecutorManagerException("Error encoding input params");
       }
     }
-
     ExecutableFlow flow = node.getExecutableFlow();
     String flowId = node.getParentFlow().getFlowPath();
     System.out.println("Uploading flowId " + flowId);
@@ -507,14 +510,12 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
   }
 
   @Override
-  public ExecutableJobInfo fetchJobInfo(int execId, String jobId, int attempts)
-      throws ExecutorManagerException {
+  public ExecutableJobInfo fetchJobInfo(int execId, String jobId, int attempts) throws ExecutorManagerException {
     QueryRunner runner = createQueryRunner();
-
     try {
       List<ExecutableJobInfo> info =
           runner.query(FetchExecutableJobHandler.FETCH_EXECUTABLE_NODE,
-              new FetchExecutableJobHandler(), execId, jobId, attempts);
+              new FetchExecutableJobHandler(), execId, jobId);
       if (info == null || info.isEmpty()) {
         return null;
       }
@@ -772,6 +773,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
 
   private static class LastInsertID implements ResultSetHandler<Long> {
     private static String LAST_INSERT_ID = "SELECT LAST_INSERT_ID()";
+    private static String LASTVAL = "SELECT LASTVAL()";
 
     @Override
     public Long handle(ResultSet rs) throws SQLException {
@@ -849,7 +851,7 @@ public class JdbcExecutorLoader extends AbstractJdbcLoader implements
         "SELECT exec_id, project_id, version, flow_id, job_id, "
             + "start_time, end_time, status, attempt "
             + "FROM execution_jobs WHERE exec_id=? "
-            + "AND job_id=? AND attempt_id=?";
+            + "AND job_id=?";
     private static String FETCH_EXECUTABLE_NODE_ATTEMPTS =
         "SELECT exec_id, project_id, version, flow_id, job_id, "
             + "start_time, end_time, status, attempt FROM execution_jobs "
