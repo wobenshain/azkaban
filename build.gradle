@@ -57,6 +57,9 @@ subprojects {
    */
   test {
     testLogging {
+      showExceptions=true
+      showStackTraces=true
+      showStandardStreams=true
       afterSuite { desc, result ->
         if (desc.getParent()) {
           logger.info desc.getName()
@@ -109,6 +112,7 @@ project(':azkaban-common') {
     compile('org.mortbay.jetty:jetty:6.1.26')
     compile('org.mortbay.jetty:jetty-util:6.1.26')
     compile('org.slf4j:slf4j-api:1.6.1')
+    compile('org.postgresql:postgresql:9.3-1102-jdbc4')
 
     testCompile('junit:junit:4.11')
     testCompile('org.hamcrest:hamcrest-all:1.3')
