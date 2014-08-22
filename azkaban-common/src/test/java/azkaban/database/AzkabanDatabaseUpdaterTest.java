@@ -51,6 +51,25 @@ public class AzkabanDatabaseUpdaterTest {
   }
 
   @Test
+  public void testPostgreSQLAutoCreate() throws Exception {
+    String confDir = "unit/conf/dbtestpostgresql";
+    System.out.println("1.***Now testing check");
+    AzkabanDatabaseUpdater.main(new String[] { "-c", confDir });
+
+    System.out.println("2.***Now testing update");
+    AzkabanDatabaseUpdater.main(new String[] { "-u", "-c", confDir });
+
+    System.out.println("3.***Now testing check again");
+    AzkabanDatabaseUpdater.main(new String[] { "-c", confDir });
+
+    System.out.println("4.***Now testing update again");
+    AzkabanDatabaseUpdater.main(new String[] { "-c", confDir, "-u" });
+
+    System.out.println("5.***Now testing check again");
+    AzkabanDatabaseUpdater.main(new String[] { "-c", confDir });
+  }
+
+  @Test
   public void testMySQLAutoCreate() throws Exception {
     String confDir = "unit/conf/dbtestmysql";
     System.out.println("1.***Now testing check");
@@ -101,6 +120,24 @@ public class AzkabanDatabaseUpdaterTest {
 
     DataSource datasource = DataSourceUtils.getDataSource(props);
     QueryRunner runner = new QueryRunner(datasource);
+    try {
+      runner.update("drop database azkabanunittest");
+    } catch (SQLException e) {
+    }
+    runner.update("create database azkabanunittest");
+
+    props = new Props();
+
+    props.put("database.type", "postgresql");
+    props.put("postgresql.host", "localhost");
+    props.put("postgresql.port", "5432");
+    props.put("postgresql.database", "");
+    props.put("postgresql.user", "azkaban");
+    props.put("postgresql.password", "azpass");
+    props.put("postgresql.numconnections", 10);
+
+    datasource = DataSourceUtils.getDataSource(props);
+    runner = new QueryRunner(datasource);
     try {
       runner.update("drop database azkabanunittest");
     } catch (SQLException e) {

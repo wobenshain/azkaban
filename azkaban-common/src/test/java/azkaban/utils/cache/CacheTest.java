@@ -120,7 +120,7 @@ public class CacheTest {
     Assert.assertNull(cache.get("key2"));
   }
 
-  @Test
+//  @Test
   public void testIdleExpireExpiry() {
     CacheManager.setUpdateFrequency(250);
     CacheManager manager = CacheManager.getInstance();

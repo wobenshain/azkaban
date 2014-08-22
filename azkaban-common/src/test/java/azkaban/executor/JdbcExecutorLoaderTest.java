@@ -49,20 +49,26 @@ import azkaban.utils.Props;
 public class JdbcExecutorLoaderTest {
   private static boolean testDBExists;
   // @TODO remove this and turn into local host.
-  private static final String host = "cyu-ld.linkedin.biz";
-  private static final int port = 3306;
+  private static final String databasetype = "postgresql";
+  private static final String host = "localhost";
+  private static final int port = 5432;
   private static final String database = "azkaban2";
   private static final String user = "azkaban";
   private static final String password = "azkaban";
   private static final int numConnections = 10;
 
-  private File flowDir = new File("unit/executions/exectest1");
+  private File flowDir = new File("../azkaban-test/src/test/resources/executions/exectest1");
 
   @BeforeClass
   public static void setupDB() {
-    DataSource dataSource =
-        DataSourceUtils.getMySQLDataSource(host, port, database, user,
-            password, numConnections);
+    DataSource dataSource;
+    if (databasetype.equals("mysql")) {
+        dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
+    } else if (databasetype.equals("postgresql")) {
+        dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        throw new RuntimeException("Improper database.type. Please choose mysql or postgres.");
+    }
     testDBExists = true;
 
     Connection connection = null;
@@ -127,9 +133,14 @@ public class JdbcExecutorLoaderTest {
       return;
     }
 
-    DataSource dataSource =
-        DataSourceUtils.getMySQLDataSource(host, port, database, user,
-            password, numConnections);
+    DataSource dataSource;
+    if (databasetype.equals("mysql")) {
+        dataSource = DataSourceUtils.getMySQLDataSource(host, port, database, user, password, numConnections);
+    } else if (databasetype.equals("postgresql")) {
+        dataSource = DataSourceUtils.getPostgreSQLDataSource(host, port, database, user, password, numConnections);
+    } else {
+        throw new RuntimeException(databasetype + " is not a valid database type. Please use either mysql or postgresql.");
+    }
     Connection connection = null;
     try {
       connection = dataSource.getConnection();
@@ -424,9 +435,7 @@ public class JdbcExecutorLoaderTest {
   @Ignore @Test
   public void testRemoveExecutionLogsByTime() throws ExecutorManagerException,
       IOException, InterruptedException {
-
     ExecutorLoader loader = createLoader();
-
     File logDir = new File("unit/executions/logtest");
 
     // Multiple of 255 for Henry the Eigth
@@ -487,14 +496,25 @@ public class JdbcExecutorLoaderTest {
 
   private ExecutorLoader createLoader() {
     Props props = new Props();
-    props.put("database.type", "mysql");
+    props.put("database.type", databasetype);
 
-    props.put("mysql.host", host);
-    props.put("mysql.port", port);
-    props.put("mysql.user", user);
-    props.put("mysql.database", database);
-    props.put("mysql.password", password);
-    props.put("mysql.numconnections", numConnections);
+    if (databasetype.equals("mysql")) {
+      props.put("mysql.host", host);
+      props.put("mysql.port", port);
+      props.put("mysql.user", user);
+      props.put("mysql.database", database);
+      props.put("mysql.password", password);
+      props.put("mysql.numconnections", numConnections);
+    } else if (databasetype.equals("postgresql")) {
+      props.put("postgresql.host", host);
+      props.put("postgresql.port", port);
+      props.put("postgresql.user", user);
+      props.put("postgresql.database", database);
+      props.put("postgresql.password", password);
+      props.put("postgresql.numconnections", numConnections);
+    } else {
+      throw new RuntimeException(databasetype + " is not a valid database type. Please use mysql or postgresql.");
+    }
 
     return new JdbcExecutorLoader(props);
   }

@@ -100,6 +100,26 @@ public class AzkabanDatabaseSetupTest {
     Assert.assertFalse(setup.needsUpdating());
   }
 
+  @Test
+  public void testPostgreSQLQuery() throws Exception {
+    Props postgresql = getPostgreSQLProps();
+    AzkabanDatabaseSetup setup = new AzkabanDatabaseSetup(postgresql);
+
+    setup.loadTableInfo();
+    setup.printUpgradePlan();
+    setup.updateDatabase(true, true);
+    Assert.assertTrue(setup.needsUpdating());
+
+    setup.loadTableInfo();
+    setup.printUpgradePlan();
+    setup.updateDatabase(true, true);
+    Assert.assertTrue(setup.needsUpdating());
+
+    setup.loadTableInfo();
+    setup.printUpgradePlan();
+    Assert.assertFalse(setup.needsUpdating());
+  }
+
   private static Props getH2Props() {
     Props props = new Props();
     props.put("database.type", "h2");
@@ -124,19 +144,38 @@ public class AzkabanDatabaseSetupTest {
     return props;
   }
 
-  private static void clearUnitTestDB() throws SQLException {
+  private static Props getPostgreSQLProps() {
     Props props = new Props();
 
-    props.put("database.type", "mysql");
-    props.put("mysql.host", "localhost");
-    props.put("mysql.port", "3306");
+    props.put("database.type", "postgresql");
+    props.put("postgresql.port", "5432");
+    props.put("postgresql.host", "localhost");
+    props.put("postgresql.database", "azkabanunittest");
+    props.put("postgresql.user", "azkaban");
+    props.put("database.sql.scripts.dir", "unit/sql");
+    props.put("postgresql.password", "azpass");
+    props.put("postgresql.numconnections", 10);
+
+    return props;
+  }
+
+  private static void clearUnitTestDB() throws SQLException {
+    Props props = getMySQLProps();
     props.put("mysql.database", "");
-    props.put("mysql.user", "root");
-    props.put("mysql.password", "");
-    props.put("mysql.numconnections", 10);
 
     DataSource datasource = DataSourceUtils.getDataSource(props);
     QueryRunner runner = new QueryRunner(datasource);
+    try {
+      runner.update("drop database azkabanunittest");
+    } catch (SQLException e) {
+    }
+    runner.update("create database azkabanunittest");
+
+    props = getPostgreSQLProps();
+    props.put("postgresql.database", "");
+
+    datasource = DataSourceUtils.getDataSource(props);
+    runner = new QueryRunner(datasource);
     try {
       runner.update("drop database azkabanunittest");
     } catch (SQLException e) {
